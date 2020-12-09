@@ -22,13 +22,12 @@ Auth::routes();
 Route::get('/home', 'HomeController@index')->name('home');
 
 Route::group(['prefix' => 'account', 'middleware' => 'auth'], function(){
-  Route::resource('deposits', 'DepositController')->except('create');
   Route::get('/wallet/deposits/create', 'DepositController@create')->name('deposits.create');
-  Route::resource('wallets', 'WalletController')->except(['update', 'edit']);
+  Route::put('/wallet/deposits/store', 'DepositController@store')->name('deposits.store');
+
   Route::get('/wallet/edit', 'WalletController@edit')->name('wallets.edit');
   Route::put('/wallet/update', 'WalletController@update')->name('wallets.update');
 
   Route::get('/', 'MainController@index')->name('accounts.index');
 
-  Route::get('/test', 'DepositController@topUpPercents');
 });

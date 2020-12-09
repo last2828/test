@@ -5,8 +5,6 @@ namespace App;
 use App\Interfaces\InterfaceTransaction;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
 
 class Deposit extends Model
 {
