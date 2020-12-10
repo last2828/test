@@ -5,7 +5,6 @@ namespace App;
 use App\Interfaces\InterfaceTransaction;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Facades\DB;
 
 class Deposit extends Model
 {
@@ -40,11 +39,6 @@ class Deposit extends Model
   public function transactions()
   {
     return $this->hasMany(Transaction::class);
-  }
-
-  public function latestTransaction()
-  {
-    return $this->hasOne(Transaction::class)->latest();
   }
 
   public function createDeposit($wallet, $invested, InterfaceTransaction $transaction)
@@ -86,11 +80,9 @@ class Deposit extends Model
 
   public function getActiveDeposits()
   {
-    $time = Carbon::now()->subMinute()->toDateTimeString();
-
-    $activeDeposits = self::with('wallet')
+    $activeDeposits = self::with(['wallet', 'transactions'])
       ->where('active', true)
-      ->where('updated_at', '<=', $time)
+      ->where('updated_at', '<=', Carbon::now()->subMinute()->toDateTimeString())
       ->get();
 
     return $activeDeposits;
@@ -101,6 +93,7 @@ class Deposit extends Model
   {
     foreach($activeDeposits as $deposit)
     {
+
       if($deposit->accrue_times < 9)
       {
         $transactionType = $this->typeTransactionAccrue;
