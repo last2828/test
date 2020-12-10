@@ -5,6 +5,7 @@ namespace App;
 use App\Interfaces\InterfaceTransaction;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\DB;
 
 class Deposit extends Model
 {
@@ -41,10 +42,13 @@ class Deposit extends Model
     return $this->hasMany(Transaction::class);
   }
 
+  public function latestTransaction()
+  {
+    return $this->hasOne(Transaction::class)->latest();
+  }
+
   public function createDeposit($wallet, $invested, InterfaceTransaction $transaction)
   {
-    $transaction->createTransaction($wallet, $invested, $this->typeTransactionCreateDeposit);
-
     $depositData = [
       'user_id' => $wallet->user->id,
       'wallet_id' => $wallet->id,
@@ -54,7 +58,9 @@ class Deposit extends Model
       'duration' => $this->duration,
     ];
 
-    self::create($depositData);
+    $deposit = self::create($depositData);
+
+    $transaction->createTransaction($wallet, $invested, $this->typeTransactionCreateDeposit, $deposit->id);
 
     return true;
   }
@@ -66,26 +72,32 @@ class Deposit extends Model
 
   public static function topUpPercents()
   {
-    $deposit = new Deposit();
+    $deposit = new self();
     $activeDeposits = $deposit->getActiveDeposits();
-    $deposit->topUpWalletFromPercents($activeDeposits);
+    if($activeDeposits->isNotEmpty())
+    {
+      $deposit->topUpWalletFromPercents($activeDeposits, new Transaction);
 
-    return true;
+      return true;
+    }
+
+    return false;
   }
 
   public function getActiveDeposits()
   {
     $time = Carbon::now()->subMinute()->toDateTimeString();
 
-    $activeDeposits = Deposit::with('wallet')
+    $activeDeposits = self::with('wallet')
       ->where('active', true)
-      ->where('created_at', '<', $time)
+      ->where('updated_at', '<=', $time)
       ->get();
 
     return $activeDeposits;
   }
 
-  public function topUpWalletFromPercents($activeDeposits)
+  
+  public function topUpWalletFromPercents($activeDeposits, InterfaceTransaction $transaction)
   {
     foreach($activeDeposits as $deposit)
     {
@@ -96,7 +108,7 @@ class Deposit extends Model
         $transactionType = $this->typeTransactionCloseDeposit;
       }
 
-      Transaction::createTransaction($deposit->wallet, $deposit['percent'], $transactionType);
+      $transaction->createTransaction($deposit->wallet, $deposit['percent'], $transactionType, $deposit->id);
 
       $walletData['balance'] = $deposit['percent'] + $deposit->wallet->balance;
       $deposit->wallet->update($walletData);

@@ -30,13 +30,15 @@ class Transaction extends Model implements InterfaceTransaction
     return $this->belongsTo(Deposit::class);
   }
 
-  public static function createTransaction($wallet, $amount, $type)
+
+  public static function createTransaction($wallet, $amount, $type, $depositId = null)
   {
     $transactionData = [
       'type' => $type,
       'user_id' => $wallet->user->id,
       'wallet_id' => $wallet->id,
       'amount' => $amount,
+      'deposit_id' => $depositId,
     ];
 
     self::create($transactionData);

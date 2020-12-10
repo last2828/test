@@ -23,7 +23,7 @@ Route::get('/home', 'HomeController@index')->name('home');
 
 Route::group(['prefix' => 'account', 'middleware' => 'auth'], function(){
   Route::get('/wallet/deposits/create', 'DepositController@create')->name('deposits.create');
-  Route::put('/wallet/deposits/store', 'DepositController@store')->name('deposits.store');
+  Route::post('/wallet/deposits/store', 'DepositController@store')->name('deposits.store');
 
   Route::get('/wallet/edit', 'WalletController@edit')->name('wallets.edit');
   Route::put('/wallet/update', 'WalletController@update')->name('wallets.update');
